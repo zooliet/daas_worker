@@ -4,4 +4,10 @@ copy*.*
 noname
 sample*.*
 tmp/
+*.mp4
+*.mov
+*.wmv
+*.avi
+*.png
+*.jpg
 
