@@ -1,0 +1,7 @@
+*.lock
+*.log
+copy*.*
+noname
+sample*.*
+tmp/
+
