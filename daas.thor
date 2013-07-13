@@ -2,7 +2,7 @@ class Daas < Thor
   
   include Thor::Actions
 
-  desc "producer1 --ip <ip>", "Start producer: for direct exchange test"
+  desc "producer1 --ip <ip>", "Basic AMQP producer"
   method_option :ip, type: :string, default: '127.0.0.1'
   def producer1
     require File.expand_path('../basic_amqp/producer', __FILE__)
@@ -16,7 +16,7 @@ class Daas < Thor
     # end
 	end
 
-  desc "consumer1 --ip <ip>", "Start consumer: for direct exchange test"
+  desc "consumer1 --ip <ip>", "Basic AMQP consumer"
   method_option :ip, type: :string, default: '127.0.0.1'
   def consumer1
     require File.expand_path('../basic_amqp/consumer', __FILE__)
@@ -24,7 +24,7 @@ class Daas < Thor
     consumer.run    
 	end
 
-  desc "producer2 --ip <ip> --in <filename> --out <filename>", "Start producer for file trasfer test"
+  desc "producer2 --ip <ip> --in <filename> --out <filename>", "File transfer : producer part"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :in, type: :string
   method_option :out, type: :string, default: 'noname'
@@ -45,7 +45,7 @@ class Daas < Thor
     # end
 	end
 
-  desc "consumer2 --ip <ip> --sleep <sec>", "Start consumer for file trasfer test"
+  desc "consumer2 --ip <ip> --sleep <sec>", "File transfer : consumer part"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :sleep, type: :numeric, default: 3
   def consumer2    
