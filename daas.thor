@@ -24,7 +24,7 @@ class Daas < Thor
     consumer.run    
 	end
 
-  desc "producer2 --ip <ip> --in <filename> --out <filename>", "File transfer : producer part"
+  desc "producer2 --ip <ip> --in <filename> --out <filename>", "File sending producer"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :in, type: :string
   method_option :out, type: :string, default: 'noname'
@@ -45,7 +45,7 @@ class Daas < Thor
     # end
 	end
 
-  desc "consumer2 --ip <ip> --sleep <sec>", "File transfer : consumer part"
+  desc "consumer2 --ip <ip> --sleep <sec>", "File receiving consumer"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :sleep, type: :numeric, default: 3
   def consumer2    
