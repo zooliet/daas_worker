@@ -7,10 +7,10 @@ require 'streamio-ffmpeg'
 
 module DAAS
 
-
   
 	class Producer
 		attr_reader :ipaddress, :ifilename, :ofilename, :default_split_duration
+#		attr_accessor :timespan
     
 		def initialize(options)
 			puts "Creating a producer instance"
@@ -100,6 +100,9 @@ module DAAS
 			  end
 			end
 
+			#timespan=Time.now
+			puts "transmit:: <<< #{Time.now}"
+
 
 		end
 
@@ -124,9 +127,10 @@ module DAAS
 			system(default_string)
 
 			puts "Remove temporary files"
-			system("rm #{filename}.header")
-			system("rm #{filename}*.ts")
+			system("rm #{filename}.header #{filename}*.ts")
+			puts "Receive:: <<< #{Time.now}  Elapsed time : #timespan"
 			
+			#timespan= Time.now - timesapn
 		end
 
 		def run
@@ -175,6 +179,7 @@ module DAAS
 
 			   puts "*** Sending message"
 			   split_mp4(ifilename,ofilename)
+				puts "split:: <<< #{Time.now}"
 			   transmit(producer_transmit,producer_reply, ofilename)
 
 			   # producer_transmit.publish(fmessage, :reply_to => producer_reply.name)
