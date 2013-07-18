@@ -62,10 +62,11 @@ class Daas < Thor
     consumer.run    
 	end
 
-  desc "producer3 --ip <ip> --in <filename> --out <filename>", "Video File sending producer"
+  desc "producer3 --ip <ip> --in <filename> --out <filename> --dur seconds", "Video File sending producer"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :in, type: :string
   method_option :out, type: :string
+  method_option :dur, type: :numeric, default: 60
   def producer3
     require File.expand_path('../video_transfer/producer', __FILE__)
     producer = DAAS::Producer.new(options)

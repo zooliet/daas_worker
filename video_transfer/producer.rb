@@ -10,23 +10,25 @@ module DAAS
 
   
 	class Producer
-		attr_reader :ipaddress, :ifilename, :ofilename
+		attr_reader :ipaddress, :ifilename, :ofilename, :default_split_duration
     
 		def initialize(options)
 			puts "Creating a producer instance"
-			if options.length  < 3
+			if options.length  < 4
 				puts "Usage : procuder.rb ipaddress filename outfilename [ipaddress]"
 				return false
 			end
 			@ipaddress = options[:ip]
 			@ifilename = options[:in]  if options[:in]
 			@ofilename = options[:out] if options[:out]
+			@default_split_duration = options[:dur] if options[:dur]
+
+			puts ":#{ipaddress}:#{ifilename}:#{ofilename}:#{default_split_duration}:#{default_split_duration.class}:"
 		end 
     
 
 		def split_mp4(ifilename, ofilename)
-			default_split_duration = 50
-			default_split_duration_fmt = " -t #{Time.at(default_split_duration).gmtime.strftime('%R:%S')}"
+			default_split_duration_fmt = " -t #{Time.at(default_split_duration.to_i).gmtime.strftime('%R:%S')}"
 			trail_options              = " -bsf:v h264_mp4toannexb -f mpegts  "
 			header_info = []
 			
@@ -39,7 +41,7 @@ module DAAS
 				offset = 0
 				while offset < duration do
 					start  = offset
-					offset = offset + default_split_duration
+					offset = offset + default_split_duration.to_i
 					outfile = "#{ofilename}i-#{i.to_s}.ts"
 					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt + trail_options + outfile
 					puts option_string
@@ -121,6 +123,10 @@ module DAAS
 			puts default_string
 			system(default_string)
 
+			puts "Remove temporary files"
+			system("rm #{filename}.header")
+			system("rm #{filename}*.ts")
+			
 		end
 
 		def run
