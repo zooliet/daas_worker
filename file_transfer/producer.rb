@@ -19,7 +19,7 @@ module DAAS
     def run
       EM.run do
         puts "*** Conneting to the Broker"
-        conn = Bunny.new("amqp://guest:guest@#{broker_ip}")
+        conn = Bunny.new("amqp://guest:guest@#{@broker_ip}:5672")
         conn.start
 
         puts "*** Creating a channel in the connection."
