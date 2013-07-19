@@ -40,22 +40,38 @@ module DAAS
 			x  = ch.default_exchange
 
 			EM.run do
+
+              # gracefully exit & clean resources
+              Signal.trap("INT") { 
+                    EM.stop
+                    conn.close
+              }   
+              Signal.trap("TERM") {
+                    EM.stop
+                    conn.close
+              }
+
 			  msg = ''
 
 			  worker_queue.subscribe(:ack => true) do |delivery_info, metadata, payload|
 				# puts "Reply queue: #{metadata.reply_to} #{deliver_info.exchange}"
 
-				i = metadata[:headers]["chunk_index"]
-				total_chunks = metadata[:headers]["total_chunks"]
-				ofile = metadata[:headers]["out_file"]
-				header = {type: 'type_2', chunk_index: i, total_chunks: total_chunks,out_file: ofile}
+				if metadata[:headers]["type"] == 'type_2'
+					i = metadata[:headers]["chunk_index"]
+					total_chunks = metadata[:headers]["total_chunks"]
+					ofile = metadata[:headers]["out_file"]
+					header = {type: 'type_2', chunk_index: i, total_chunks: total_chunks,out_file: ofile}
 
-				puts "Reply queue: #{metadata.reply_to}:#{metadata.message_id}:#{i}:#{total_chunks}:#{ofile}:"
-				msg = payload
-				sleep(rand(rcount))
-				ch.acknowledge(delivery_info.delivery_tag, false)
-				x.publish(msg, :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
-				puts "Consumer reply"
+					puts "Reply queue: #{metadata.reply_to}:#{metadata.message_id}:#{i}:#{total_chunks}:#{ofile}:"
+					msg = payload
+					sleep(rand(rcount))
+					ch.acknowledge(delivery_info.delivery_tag, false)
+					x.publish(msg, :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
+					puts "Consumer reply"
+				else
+					ch.acknowledge(delivery_info.delivery_tag, false)
+					puts "<< Received msg : #{payload}, #{Time.now}"
+				end
 			  end
 			end
 
