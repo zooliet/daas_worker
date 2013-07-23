@@ -54,14 +54,6 @@ class Daas < Thor
     consumer.run
 	end
 
-  desc "consumer3 --ip <ip>", "Video File receiving consumer "
-  method_option :ip, type: :string, default: '127.0.0.1'
-  def consumer3
-    require File.expand_path('../video_transfer/consumer', __FILE__)
-    consumer = DAAS::Consumer.new(options)
-    consumer.run    
-	end
-
   desc "producer3 --ip <ip> --in <filename> --out <filename> --dur seconds", "Video File sending producer"
   method_option :ip, type: :string, default: '127.0.0.1'
   method_option :in, type: :string
@@ -72,4 +64,32 @@ class Daas < Thor
     producer = DAAS::Producer.new(options)
     producer.run
    end
+
+  desc "consumer3 --ip <ip>", "Video File receiving consumer "
+  method_option :ip, type: :string, default: '127.0.0.1'
+  def consumer3
+    require File.expand_path('../video_transfer/consumer', __FILE__)
+    consumer = DAAS::Consumer.new(options)
+    consumer.run    
+ 	end
+
+  desc "producer4 --ip <ip> --in <filename> --out <filename> --dur seconds", "Video File sending producer"
+  method_option :ip, type: :string, default: '127.0.0.1'
+  method_option :in, type: :string
+  method_option :out, type: :string
+  method_option :dur, type: :numeric, default: 60
+  def producer4
+    require File.expand_path('../video_transfer_revisited/producer', __FILE__)
+    producer = DAAS::Producer.new(options)
+    producer.run
+   end
+
+  desc "consumer4 --ip <ip>", "Video File receiving consumer "
+  method_option :ip, type: :string, default: '127.0.0.1'
+  def consumer4
+    require File.expand_path('../video_transfer_revisited/consumer', __FILE__)
+    consumer = DAAS::Consumer.new(options)
+    consumer.run    
+ 	end
+
 end
