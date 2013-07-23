@@ -7,11 +7,12 @@ require 'streamio-ffmpeg'
 
 module DAAS
 
-  
+
 	class Producer
 		attr_reader :ipaddress, :ifilename, :ofilename, :default_split_duration
-
+		attr_writer :default_split_duration
     
+
 		def initialize(options)
 			puts "Creating a producer instance"
 			if options.length  < 4
@@ -297,8 +298,9 @@ class KeyboardHandler < EM::Connection
 			when :duration
 				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
 				if infile != nil 
-					default_split_duration = infile.to_i
+					@inst.default_split_duration = infile.to_i
 				end
+				puts "Change split duration to #{@inst.default_split_duration}"
 
 			when :help
 				command_helper()
