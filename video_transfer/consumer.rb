@@ -34,7 +34,7 @@ module DAAS
 			ch.prefetch(1)
 
 			puts "*** Making a queue"
-			worker_queue  = ch.queue("daas.workers", :auto_delete => true).bind("daas.producer")
+			worker_queue  = ch.queue("daas.workers1", :auto_delete => true).bind("daas.producer")
 
 			puts "*** Making default exchange to reply message "
 			x  = ch.default_exchange
