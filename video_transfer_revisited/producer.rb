@@ -59,6 +59,7 @@ module DAAS
 					
 					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt + trail_options + outfile					
           # puts option_string
+          puts "*** Command executed: #{option_string}"    			
 					system("#{option_string} &> /dev/null")
 
 					i = i + 1					
