@@ -35,10 +35,10 @@ module DAAS
 			header_info = []  
 
       # if ifilename != nil and ofilename != nil
-      #   @fp = 0
+      #   # @fp = 0
       #   begin
       #     @fp = FFMPEG::Movie.new(ifilename)
-      #     rescue Exception => e
+      #   rescue Exception => e
       #     puts "No such file #{ifilename} "
       #     return false
       #   end
@@ -59,6 +59,7 @@ module DAAS
 					
 					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt + trail_options + outfile					
           # puts option_string
+          puts "*** Command executed: #{option_string}"    			
 					system("#{option_string} &> /dev/null")
 
 					i = i + 1					
@@ -146,7 +147,8 @@ module DAAS
 			system("#{default_string} &> /dev/null")
 			
 			puts "*** Removing temporary files"
-			FileUtils.rm Dir.glob("#{filename}**")		  
+			FileUtils.rm Dir.glob("#{filename}**.ts")		  
+			FileUtils.rm Dir.glob("#{filename}**.header")		  
 
       # 
       # system("rm #{filename}.header #{filename}*.ts")
