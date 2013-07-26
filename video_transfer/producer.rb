@@ -286,7 +286,7 @@ class KeyboardHandler < EM::Connection
 		puts "Usage: cvt --in filename.mp4 --out filename.avi"
 		puts "Usage: duration seconds"
 		puts "Usage: profile  profile_type,  ex) profile1, profile2"
-		puts "Usage: media    media_type,    ex) avi,mp4,etc"
+		puts "Usage: media    ex) supported media type  avi,mp4,flv,etc"
 		puts "Usage: msg send_message_string"
 		puts "Usage: help "
 		puts "Usage: quit "
@@ -296,7 +296,7 @@ class KeyboardHandler < EM::Connection
 	def command_parser(data)
 
 		profile_list = ['profile1','profile2','profile3']
-		media_list   = ['avi','mp4']
+		media_list   = ['avi','mp4','flv']
 
 		command = data.split(" ").first
 		# command line parser

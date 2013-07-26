@@ -33,7 +33,9 @@ module DAAS
 			when 'mp4'
 				cmd_string = "ffmpeg -i #{ifile} -acodec libfaac -vcodec h264 -f mp4 #{ofile}c"
 			when 'avi'
-				cmd_string = " ffmpeg -i #{ifile} -acodec mp3 -vcodec mpeg4 -vtag DIVX -f avi #{ofile}c"
+				cmd_string = "ffmpeg -i #{ifile} -acodec mp3 -vcodec mpeg4 -vtag DIVX -f avi #{ofile}c"
+			when 'flv'
+				cmd_string = "ffmpeg -i #{ifile} -ar 44100 -acodec mp3 -vcodec flv -f flv #{ofile}c"
 			else
 				puts "Unkwon target transcoding type"
 				return false
