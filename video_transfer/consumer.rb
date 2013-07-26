@@ -17,6 +17,35 @@ module DAAS
 			@ipaddress = options[:ip]    
 		end 
 
+		def transcoding(content, profile, ofile, media)
+
+			ifile = "#{ofile}.#{media}"
+			puts ifile
+
+            f = File.open(ifile,"w+")
+            f.write(content)
+            f.close
+			
+			puts ofile
+			type = ofile.split(".")[1]
+
+			case type
+			when 'mp4'
+				cmd_string = "ffmpeg -i #{ifile} -acodec libfaac -vcodec h264 -f mp4 #{ofile}c"
+			when 'avi'
+				cmd_string = " ffmpeg -i #{ifile} -acodec mp3 -vcodec mpeg4 -vtag DIVX -f avi #{ofile}c"
+			else
+				puts "Unkwon target transcoding type"
+				return false
+			end
+
+			puts cmd_string
+			system( cmd_string )
+			system( "rm #{ifile}" )
+
+		end
+
+
 		def run
 			user_name = "consumer"
 			rcount = 1
@@ -60,14 +89,22 @@ module DAAS
 					i = metadata[:headers]["chunk_index"]
 					total_chunks = metadata[:headers]["total_chunks"]
 					ofile = metadata[:headers]["out_file"]
-					header = {type: 'type_2', chunk_index: i, total_chunks: total_chunks,out_file: ofile}
+					profile_type = metadata[:headers]["profile"]
+					media_type  = metadata[:headers]["mtype"]
+					header = {type: 'type_2', chunk_index: i, total_chunks: total_chunks,out_file: ofile, profile: profile_type, mtype: media_type}
 
-					puts "Reply queue: #{metadata.reply_to}:#{metadata.message_id}:#{i}:#{total_chunks}:#{ofile}:"
+					puts "Reply queue: #{metadata.reply_to}:#{metadata.message_id}:#{i}:#{total_chunks}:#{ofile}:#{profile_type}:#{media_type}:"
 					msg = payload
-					sleep(rand(rcount))
+					# sleep(rand(rcount))
+					transcoding(msg, profile_type, ofile, media_type)
+					tf = File.open("#{ofile}c")
+                    if tf != nil
+						x.publish(tf.sysread(tf.size), :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
+						puts "Consumer reply"
+					end
+					tf.close
+					system("rm #{ofile}c")
 					ch.acknowledge(delivery_info.delivery_tag, false)
-					x.publish(msg, :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
-					puts "Consumer reply"
 				else
 					ch.acknowledge(delivery_info.delivery_tag, false)
 					puts "<< Received msg : #{payload}, #{Time.now}"

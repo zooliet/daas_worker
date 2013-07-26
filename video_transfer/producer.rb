@@ -9,8 +9,8 @@ module DAAS
 
 
 	class Producer
-		attr_reader :ipaddress, :ifilename, :ofilename, :default_split_duration
-		attr_writer :default_split_duration
+		attr_reader :ipaddress, :ifilename, :ofilename, :default_split_duration, :profile_type, :to_media, :from_media
+		attr_writer :default_split_duration, :profile_type, :to_media, :from_media, :ifilename, :ofilename
     
 
 		def initialize(options)
@@ -19,20 +19,36 @@ module DAAS
 				puts "Usage : procuder.rb ipaddress filename outfilename [ipaddress]"
 #				return false
 			end
-			@ipaddress = options[:ip]
-			@ifilename = options[:in]  if options[:in]
-			@ofilename = options[:out] if options[:out]
+			@ipaddress  = options[:ip]
+			@ifilename  = options[:in]  if options[:in]
+			@ofilename  = options[:out] if options[:out]
 			@default_split_duration = options[:dur] if options[:dur]
+			@profile_type = options[:pro] if options[:pro]
 
 			puts ":#{ipaddress}:#{ifilename}:#{ofilename}:#{default_split_duration}:#{default_split_duration.class}:"
 		end 
     
 
 		def split_mp4(ifilename, ofilename)
-			default_split_duration_fmt = " -t #{Time.at(default_split_duration.to_i).gmtime.strftime('%R:%S')}"
-			trail_options              = " -bsf:v h264_mp4toannexb -f mpegts  "
+			default_split_duration_fmt = " -t #{Time.at(default_split_duration.to_i).gmtime.strftime('%R:%S')} "
+			#trail_options              = " -bsf:v h264_mp4toannexb -f mpegts  "
 			header_info = []
 			
+			# extract source file media type
+			@from_media = ifilename.split(".")[1]
+			if from_media == nil
+				puts "File type doesn't support "
+				return false
+			end
+
+			# extract destinamtion file & media type
+			 info_file = ofilename.split(".")[0]
+			@to_media  = ofilename.split(".")[1]
+			if to_media == nil
+				puts "File type doesn't support "
+				return false
+			end
+
 			default_option_string = "ffmpeg -i #{ifilename} -acodec copy -vcodec copy -ss "	
 			if ifilename != nil and ofilename != nil
 				@fp = 0
@@ -48,24 +64,25 @@ module DAAS
 				while offset < duration do
 					start  = offset
 					offset = offset + default_split_duration.to_i
-					outfile = "#{ofilename}i-#{i.to_s}.ts"
-					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt + trail_options + outfile
+					outfile = "#{info_file}i-#{i.to_s}.#{from_media}"
+					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt  + outfile
 					puts option_string
 					system(option_string)
 					i = i +1
 					header_info[i] = outfile
 				end
 
-				File.open("#{ofilename}.header","w+") do | f |
+				File.open("#{info_file}.header","w+") do | f |
 					if f == nil
-						puts "Header information file create error: #{ifilename}.header"
+						puts "Header information file create error: #{info_file}.header"
 						break
 					end
 
 					# make up header information for transmitting file
-					# file prefix, number of files, etc
-					# ex) ofilename 7
-					header_info[0] = "#{ofilename} number_of_files #{i}"
+					# file header information field
+					# input_file output_file profile input_file_extension output_file_extension number_of_split_file
+					# ex) test.mp4 test.avi profile1 mp4 avi 7
+					header_info[0] = "#{ifilename} #{ofilename} #{profile_type} #{from_media} #{to_media} #{i}"
 					f.write( header_info.join("\n") )
 					f.close
 				end
@@ -80,9 +97,14 @@ module DAAS
 
 			chunks =0
 			ofilename=""
+			profile_type = ""
+			to_media   = ""
+			from_media =""
+			sfile =""
+			info_file = filename.split(".").first
 			if filename
 			  i = 0
-			  f = File.open("#{filename}.header") 
+			  f = File.open("#{info_file}.header") 
 			  f.each_line do | fline|
 
 				 # First line in the given file is information field.
@@ -92,14 +114,20 @@ module DAAS
 				 puts "line#{i}:#{fline}:"
 				 if i == 0
 				    header_info = fline.split(" ")	
-					puts " File prefix name : #{header_info[0]}, number of files : #{header_info[2]}"
-					ofilename= header_info[0]
-					chunks = header_info[2]
+					# file header information field
+					# input_file output_file profile input_file_extension output_file_extension number_of_split_file
+					puts " File header info : #{header_info[0]} #{header_info[1]}, #{header_info[2]}, #{header_info[3]},#{header_info[4]}, #{header_info[5]}"
+					ofilename= header_info[1].split(".").first
+					profile_type= header_info[2]
+					from_media= header_info[3]
+					to_media= header_info[4]
+					chunks = header_info[5]
 				 else
+					sfile = "#{ofilename}o-#{i}.#{to_media}"	 	
 					tf = File.open(fline.strip)
 				    if tf != nil
 					  puts "*** Publishing a chunk #{i}"
-					  x.publish(tf.sysread(tf.size), reply_to: recv_queue.name, message_id: i, headers: {type: 'type_2', chunk_index: i, total_chunks: chunks, out_file: ofilename })
+					  x.publish(tf.sysread(tf.size), reply_to: recv_queue.name, message_id: i, headers: {type: 'type_2', chunk_index: i, total_chunks: chunks, out_file: sfile, profile: profile_type, mtype: from_media })
 					end    
 					tf.close
 				 end    
@@ -114,28 +142,47 @@ module DAAS
 
 		end
 
-		def save_file(filename,i,content)
+		def save_file(filename,content)
 
-			if File.file?("#{filename}o-#{i}.ts")
+			if File.file?(filename)
 				puts "File name already exist. #{filenmae}"
 				return false
 			end
 
-			f = File.open("#{filename}o-#{i}.ts","w+")
+			f = File.open(filename,"w+")
 			f.write(content)
 			f.close
 
 		end
 
-		def merge_mp4(filename, file_list)
+		def merge_mp4(ofilename, file_list)
 			#default_option_string = "ffmpeg -i "concat:tt-1.ts|tt-2.ts|tt-3.ts|tt-4.ts" -c copy -bsf:a aac_adtstoasc output.mp4"
-			
-			default_string = "ffmpeg -i \"concat:#{file_list}\" -c copy -bsf:a aac_adtstoasc #{filename}.mp4"
+			#default_string = "ffmpeg -i \"concat:#{file_list}\" -c copy -bsf:a aac_adtstoasc #{filename}.mp4"
+			#default_string = "ffmpeg -f concat -i \"concat:#{file_list}\" -c copy #{ofilename}"
+
+			# extract destinamtion file & media type
+			puts "#{ofilename}:#{file_list}"
+			info_file   = ofilename.split(".")[0]
+			media_type  = ofilename.split(".")[1]
+
+			puts " merge: #{info_file}:#{media_type}"
+			# make up concatenate file
+			concat_file = "#{info_file}o.cat"
+			f = File.open(concat_file,"w+")
+			file_list.split("|").each do |line|
+				f.write("file .\/#{line}\n")
+			end
+			f.close
+
+			# make up system call command 
+			default_string = "ffmpeg -f concat -i #{concat_file} -c copy #{ofilename}"
+
 			puts default_string
 			system(default_string)
 
 			puts "Remove temporary files"
-			system("rm #{filename}.header #{filename}*.ts")
+			system("rm #{info_file}.header #{info_file}i* #{info_file}o*")
+			#system("rm #{info_file}.header")
 			
 			timediff = Time.now - @timespan
 
@@ -181,18 +228,18 @@ module DAAS
 				if metadata[:headers]["type"] == 'type_2'
 					 i = metadata[:headers]["chunk_index"]
 					 total_chunks = metadata[:headers]["total_chunks"]
-					 ofilename = metadata[:headers]["out_file"]
-					 puts "*** File chunk #{i} has returned back #{total_chunks}:#{ofilename}:"
+					 return_file = metadata[:headers]["out_file"]
+					 puts "*** File chunk #{i} has returned back #{total_chunks}:#{return_file}:"
 
-					 save_file(ofilename, i, payload )
-					 join_storage_in_hash.merge!({i => "#{ofilename}o-#{i}.ts"})
+					 save_file(return_file, payload )
+					 join_storage_in_hash.merge!({i => return_file})
 
 					 puts "total_chunk:#{total_chunks}:#{join_storage_in_hash.length}:"
 					 # if total_chunks == join_storage_in_hash.length
 					 if join_storage_in_hash.length == total_chunks.to_i
 						 puts "*** Merging chunks....."
 						 merge_file_list = join_storage_in_hash.sort.map {|k,v| v}.join("|")
-						 merge_mp4(ofilename, merge_file_list)
+						 merge_mp4( ofilename, merge_file_list)
 						 total_chunks = 0
 						 join_storage_in_hash = {}
 					 end
@@ -203,10 +250,12 @@ module DAAS
 			   end
 
 			   puts "*** Sending message"
-			   e = split_mp4(ifilename,ofilename)
-			   puts "split:: <<< #{Time.now}"
-			   if e != false
-				   transmit(producer_transmit,producer_reply, ofilename)
+			   if ifilename != nil and ofilename != nil
+				   e = split_mp4(ifilename,ofilename)
+				   puts "split:: <<< #{Time.now}"
+				   if e != false
+					   transmit(producer_transmit,producer_reply, ofilename)
+					end
 				end
 
 			   # producer_transmit.publish(fmessage, :reply_to => producer_reply.name)
@@ -234,8 +283,10 @@ class KeyboardHandler < EM::Connection
 
 	def command_helper
 
-		puts "Usage: mp4 --in filename.mp4 --out filename"
+		puts "Usage: cvt --in filename.mp4 --out filename.avi"
 		puts "Usage: duration seconds"
+		puts "Usage: profile  profile_type,  ex) profile1, profile2"
+		puts "Usage: media    media_type,    ex) avi,mp4,etc"
 		puts "Usage: msg send_message_string"
 		puts "Usage: help "
 		puts "Usage: quit "
@@ -244,26 +295,30 @@ class KeyboardHandler < EM::Connection
 
 	def command_parser(data)
 
+		profile_list = ['profile1','profile2','profile3']
+		media_list   = ['avi','mp4']
+
+		command = data.split(" ").first
 		# command line parser
-		case
-		when data.match(/help/)
+		case command
+		when 'help'
 			yield  :help , nil, nil
-		when data.match(/quit/)
+		when 'quit'
 			yield  :quit , nil, nil
-		when data.match(/msg/)
+		when 'msg'
 			yield  :msg , nil, nil
-		when data.match(/mp4/)
+		when 'cvt'
 			line = []
 			line = data.split(" ")
 			if line.length == 5
 				if line[1] == "--in" and line[3] == "--out"
-					yield  :mp4, line[2], line[4] 
+					yield  :cvt, line[2], line[4] 
 					return true
 				end
 			end
-			puts "Usage: mp4 --in filename.mp4 --out filename"
-			yield :mp4, nil, nil 
-		when data.match(/duration/)
+			puts "Usage: cvt --in filename.mp4 --out filename"
+			yield :cvt, nil, nil 
+		when 'duration'
 			line = []
 			line = data.split(" ")
 			if line.length == 2
@@ -272,6 +327,28 @@ class KeyboardHandler < EM::Connection
 			end
 			puts "Usage: duration seconds"
 			yield :duration, nil, nil 
+		when 'profile'
+			line = []
+			line = data.split(" ")
+			if line.length == 2
+				if profile_list.include?( line[1] )
+					yield :profile, line[1], nil
+					return true
+				end
+			end
+			puts "Usage: profile  profile_type,  ex) profile1, profile2"
+			yield :profile, nil, nil 
+		when 'media'
+			line = []
+			line = data.split(" ")
+			if line.length == 2
+				if media_list.include?( line[1] )
+					yield :media, line[1], nil
+					return true
+				end
+			end
+			puts "Usage: media    media_type,    ex) avi,mp4,etc"
+			yield :media, nil, nil 
 		else
 			yield nil, nil, nil
 		end
@@ -284,10 +361,12 @@ class KeyboardHandler < EM::Connection
 			command_parser(data) do | command, infile, outfile|
 		  	  
 			case command
-			when :mp4
+			when :cvt
 				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
 				if infile != nil and outfile != nil
 					puts "*** Sending message"
+					@inst.ifilename = infile
+					@inst.ofilename = outfile
 					e = @inst.split_mp4(infile, outfile)
 
 					puts "split:: <<< #{Time.now} #{e}"
@@ -299,9 +378,22 @@ class KeyboardHandler < EM::Connection
 				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
 				if infile != nil 
 					@inst.default_split_duration = infile.to_i
+					puts "Change split duration to #{@inst.default_split_duration}"
 				end
-				puts "Change split duration to #{@inst.default_split_duration}"
 
+			when :profile
+				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
+				if infile != nil 
+					@inst.profile_type = infile
+					puts "Change profile type  to #{@inst.profile_type}"
+				end
+
+			when :media
+				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
+				if infile != nil 
+					@inst.to_media = infile
+					puts "Change media type to #{@inst.to_media}"
+				end
 			when :help
 				command_helper()
 			when :quit
