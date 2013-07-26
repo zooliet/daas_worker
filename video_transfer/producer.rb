@@ -339,15 +339,6 @@ class KeyboardHandler < EM::Connection
 			puts "Usage: profile  profile_type,  ex) profile1, profile2"
 			yield :profile, nil, nil 
 		when 'media'
-			line = []
-			line = data.split(" ")
-			if line.length == 2
-				if media_list.include?( line[1] )
-					yield :media, line[1], nil
-					return true
-				end
-			end
-			puts "Usage: media    media_type,    ex) avi,mp4,etc"
 			yield :media, nil, nil 
 		else
 			yield nil, nil, nil
@@ -390,10 +381,7 @@ class KeyboardHandler < EM::Connection
 
 			when :media
 				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
-				if infile != nil 
-					@inst.to_media = infile
-					puts "Change media type to #{@inst.to_media}"
-				end
+				puts " supported media types : mp4, avi, flv "
 			when :help
 				command_helper()
 			when :quit
