@@ -20,13 +20,11 @@ module DAAS
 		def transcoding(content, profile, ofile, media)
 
 			ifile = "#{ofile}.#{media}"
-			puts ifile
 
             f = File.open(ifile,"w+")
             f.write(content)
             f.close
 			
-			puts ofile
 			type = ofile.split(".")[1]
 
 			case type
@@ -42,8 +40,9 @@ module DAAS
 			end
 
 			puts cmd_string
-			system( cmd_string )
-			system( "rm #{ifile}" )
+			system( "#{cmd_string} &> /dev/null" )
+			FileUtils.rm Dir.glob( "#{ifile}" )
+			#system( "rm #{ifile}" )
 
 		end
 
@@ -105,7 +104,7 @@ module DAAS
 						puts "Consumer reply"
 					end
 					tf.close
-					system("rm #{ofile}c")
+					system("rm #{ofile}c &> /dev/null")
 					ch.acknowledge(delivery_info.delivery_tag, false)
 				else
 					ch.acknowledge(delivery_info.delivery_tag, false)

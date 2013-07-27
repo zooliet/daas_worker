@@ -17,7 +17,6 @@ module DAAS
 			puts "Creating a producer instance"
 			if options.length  < 4
 				puts "Usage : procuder.rb ipaddress filename outfilename [ipaddress]"
-#				return false
 			end
 			@ipaddress  = options[:ip]
 			@ifilename  = options[:in]  if options[:in]
@@ -67,7 +66,7 @@ module DAAS
 					outfile = "#{info_file}i-#{i.to_s}.#{from_media}"
 					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt  + outfile
 					puts option_string
-					system(option_string)
+					system("#{option_string} &> /dev/null")
 					i = i +1
 					header_info[i] = outfile
 				end
@@ -90,7 +89,7 @@ module DAAS
 			else
 				puts "Needs input and output filenames"
 			end
-			puts "this is split method"
+			# puts "this is split method"
 		end
 
 		def transmit ( x,recv_queue,filename )
@@ -111,7 +110,7 @@ module DAAS
 				 # Second... Last lines are filename to be transmitted.
 
 				 header_info = []
-				 puts "line#{i}:#{fline}:"
+				 # puts "line#{i}:#{fline}:"
 				 if i == 0
 				    header_info = fline.split(" ")	
 					# file header information field
@@ -126,7 +125,7 @@ module DAAS
 					sfile = "#{ofilename}o-#{i}.#{to_media}"	 	
 					tf = File.open(fline.strip)
 				    if tf != nil
-					  puts "*** Publishing a chunk #{i}"
+					  puts "*** Publishing chunk #{i}:#{fline.strip}"
 					  x.publish(tf.sysread(tf.size), reply_to: recv_queue.name, message_id: i, headers: {type: 'type_2', chunk_index: i, total_chunks: chunks, out_file: sfile, profile: profile_type, mtype: from_media })
 					end    
 					tf.close
@@ -161,11 +160,11 @@ module DAAS
 			#default_string = "ffmpeg -f concat -i \"concat:#{file_list}\" -c copy #{ofilename}"
 
 			# extract destinamtion file & media type
-			puts "#{ofilename}:#{file_list}"
+			# puts "#{ofilename}:#{file_list}"
 			info_file   = ofilename.split(".")[0]
 			media_type  = ofilename.split(".")[1]
 
-			puts " merge: #{info_file}:#{media_type}"
+			# puts " merge: #{info_file}:#{media_type}"
 			# make up concatenate file
 			concat_file = "#{info_file}o.cat"
 			f = File.open(concat_file,"w+")
@@ -177,12 +176,15 @@ module DAAS
 			# make up system call command 
 			default_string = "ffmpeg -f concat -i #{concat_file} -c copy #{ofilename}"
 
-			puts default_string
-			system(default_string)
+			# puts default_string
+			system("#{default_string} &> /dev/null")
 
 			puts "Remove temporary files"
-			system("rm #{info_file}.header #{info_file}i* #{info_file}o*")
-			#system("rm #{info_file}.header")
+            FileUtils.rm Dir.glob("#{info_file}i*")    
+            FileUtils.rm Dir.glob("#{info_file}o*")    
+			FileUtils.rm Dir.glob("#{info_file}.header") 
+
+			# system("rm #{info_file}.header #{info_file}i* #{info_file}o* &> /dev/null")
 			
 			timediff = Time.now - @timespan
 
@@ -234,7 +236,7 @@ module DAAS
 					 save_file(return_file, payload )
 					 join_storage_in_hash.merge!({i => return_file})
 
-					 puts "total_chunk:#{total_chunks}:#{join_storage_in_hash.length}:"
+					 ##  puts "total_chunk:#{total_chunks}:#{join_storage_in_hash.length}:"
 					 # if total_chunks == join_storage_in_hash.length
 					 if join_storage_in_hash.length == total_chunks.to_i
 						 puts "*** Merging chunks....."
@@ -249,7 +251,7 @@ module DAAS
 				 end
 			   end
 
-			   puts "*** Sending message"
+			   # puts "*** Sending message"
 			   if ifilename != nil and ofilename != nil
 				   e = split_mp4(ifilename,ofilename)
 				   puts "split:: <<< #{Time.now}"
@@ -355,7 +357,7 @@ class KeyboardHandler < EM::Connection
 			when :cvt
 				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
 				if infile != nil and outfile != nil
-					puts "*** Sending message"
+					# puts "*** Sending message"
 					@inst.ifilename = infile
 					@inst.ofilename = outfile
 					e = @inst.split_mp4(infile, outfile)
@@ -380,7 +382,6 @@ class KeyboardHandler < EM::Connection
 				end
 
 			when :media
-				puts " cmd parsing :#{command}:#{infile}:#{outfile}:"
 				puts " supported media types : mp4, avi, flv "
 			when :help
 				command_helper()
@@ -388,7 +389,6 @@ class KeyboardHandler < EM::Connection
 				@dexchanger.delete
 				EM.stop
 			when :msg
-				#puts " cmd parsing :#{data}:#{@dexchanger.name}:#{@reply_queue.name}:"
 				@dexchanger.publish(data.sub("msg",""), reply_to: @reply_queue.name, headers: {type: 'type_1'})
 		    else
 				puts " Unknown Command : type 'help' if you want to know commands "
