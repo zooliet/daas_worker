@@ -33,6 +33,10 @@ module DAAS
 			#trail_options              = " -bsf:v h264_mp4toannexb -f mpegts  "
 			header_info = []
 			
+			@timespan=Time.now
+			splittime =Time.now
+		    puts "split start:: <<< #{Time.now}"
+
 			# extract source file media type
 			@from_media = ifilename.split(".")[1]
 			if from_media == nil
@@ -90,10 +94,15 @@ module DAAS
 				puts "Needs input and output filenames"
 			end
 			# puts "this is split method"
+
+			timediff = Time.now - splittime	
+		    puts "split end:: <<< #{Time.now} Elapsed time : #{timediff} "
 		end
 
 		def transmit ( x,recv_queue,filename )
 
+			transmittime = Time.now
+			puts "transmit start:: <<< #{Time.now}"
 			chunks =0
 			ofilename=""
 			profile_type = ""
@@ -134,9 +143,9 @@ module DAAS
 			  end
 			   f.close
 			end
-
-			@timespan=Time.now
-			puts "transmit:: <<< #{Time.now}"
+			
+			timediff = Time.now - transmittime
+			puts "transmit end:: <<< #{Time.now} Elapsed time : #{timediff}"
 
 
 		end
@@ -161,6 +170,9 @@ module DAAS
 
 			# extract destinamtion file & media type
 			# puts "#{ofilename}:#{file_list}"
+
+			mergetime = Time.now
+			puts "merge start:: <<< #{Time.now} "
 			info_file   = ofilename.split(".")[0]
 			media_type  = ofilename.split(".")[1]
 
@@ -186,9 +198,10 @@ module DAAS
 
 			# system("rm #{info_file}.header #{info_file}i* #{info_file}o* &> /dev/null")
 			
-			timediff = Time.now - @timespan
+			ttimediff = Time.now - @timespan
+			timediff = Time.now - mergetime
 
-			puts "Receive:: <<< #{Time.now}  Elapsed time : #{timediff}"
+			puts "merge end:: <<< #{Time.now} Elapsed time : #{timediff}  Total Elapsed time : #{ttimediff}"
 		end
 
 		def run
@@ -254,7 +267,6 @@ module DAAS
 			   # puts "*** Sending message"
 			   if ifilename != nil and ofilename != nil
 				   e = split_mp4(ifilename,ofilename)
-				   puts "split:: <<< #{Time.now}"
 				   if e != false
 					   transmit(producer_transmit,producer_reply, ofilename)
 					end
@@ -362,7 +374,6 @@ class KeyboardHandler < EM::Connection
 					@inst.ofilename = outfile
 					e = @inst.split_mp4(infile, outfile)
 
-					puts "split:: <<< #{Time.now} #{e}"
 					if e != false
 						@inst.transmit(@dexchanger, @reply_queue, outfile)
 					end
