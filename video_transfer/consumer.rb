@@ -99,11 +99,12 @@ module DAAS
 					# sleep(rand(rcount))
 					@replytime = Time.now
 					transcoding(msg, profile_type, ofile, media_type)
+					@transtime = Time.now - @replytime
 					tf = File.open("#{ofile}c")
                     if tf != nil
 						x.publish(tf.sysread(tf.size), :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
 						timediff = Time.now - @replytime
-						puts "Consumer reply Elapsed : #{timediff}"
+						puts "Consumer reply transTime : #{transtime} Elapsed : #{timediff}"
 					end
 					tf.close
 					system("rm #{ofile}c &> /dev/null")
