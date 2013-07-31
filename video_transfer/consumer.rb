@@ -97,11 +97,13 @@ module DAAS
 					puts "Reply queue: #{metadata.reply_to}:#{metadata.message_id}:#{i}:#{total_chunks}:#{ofile}:#{profile_type}:#{media_type}:"
 					msg = payload
 					# sleep(rand(rcount))
+					@replytime = Time.now
 					transcoding(msg, profile_type, ofile, media_type)
 					tf = File.open("#{ofile}c")
                     if tf != nil
 						x.publish(tf.sysread(tf.size), :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
-						puts "Consumer reply"
+						timediff = Time.now - @replytime
+						puts "Consumer reply Elapsed : #{timediff}"
 					end
 					tf.close
 					system("rm #{ofile}c &> /dev/null")
