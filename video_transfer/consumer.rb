@@ -104,7 +104,7 @@ module DAAS
                     if tf != nil
 						x.publish(tf.sysread(tf.size), :message_id => metadata.message_id, :routing_key => metadata.reply_to, headers: header )
 						timediff = Time.now - @replytime
-						puts "Consumer reply transTime : #{transtime} Elapsed : #{timediff}"
+						puts "Consumer reply transTime : #{@transtime} Elapsed : #{timediff}"
 					end
 					tf.close
 					system("rm #{ofile}c &> /dev/null")
