@@ -1,5 +1,7 @@
-class Daas < Thor
-  
+$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
+require 'daas'
+
+class Daas < Thor  
   include Thor::Actions
 
   desc "producer1 --ip <ip>", "Basic AMQP producer"
@@ -93,4 +95,21 @@ class Daas < Thor
     consumer.run    
  	end
 
+  desc "producer5 --ip <ip> --in <filename> --out <filename> --dur <seconds>", "Transcoding producer"
+  method_option :ip, type: :string, default: '127.0.0.1'
+  method_option :in, type: :string
+  method_option :out, type: :string
+  method_option :dur, type: :numeric, default: 60
+  method_option :pro, type: :string, default: 'profile1'
+  def producer5
+    producer = DAAS::Transcoding::Producer.new(options)
+    producer.run    
+  end
+
+  desc "consumer5 --ip <ip>", "Transcoding consumer"
+  method_option :ip, type: :string, default: '127.0.0.1'
+  def consumer5
+    consumer = DAAS::Transcoding::Consumer.new(options)
+    consumer.run        
+  end
 end
