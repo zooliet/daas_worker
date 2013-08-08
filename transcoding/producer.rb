@@ -182,9 +182,9 @@ module DAAS
         system("#{default_string} &> /dev/null")
 
   			puts "*** Remove temporary files"
-        FileUtils.rm Dir.glob("#{info_file}i*")    
-        FileUtils.rm Dir.glob("#{info_file}o*")    
-  			FileUtils.rm Dir.glob("#{info_file}.header") 
+        #         FileUtils.rm Dir.glob("#{info_file}i*")    
+        #         FileUtils.rm Dir.glob("#{info_file}o*")    
+        # FileUtils.rm Dir.glob("#{info_file}.header") 
   			# system("rm #{info_file}.header #{info_file}i* #{info_file}o* &> /dev/null")
   			
   			merge_end_time  = Time.now
