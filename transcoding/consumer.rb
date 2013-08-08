@@ -71,7 +71,7 @@ module DAAS
               replay_end_time = Time.now
               replying_time = replay_end_time - reply_start_time
 
-              FileUtils.rm Dir.glob("#{out_file}c")     
+              # FileUtils.rm Dir.glob("#{out_file}c")     
               # system("rm #{ofile}c &> /dev/null")                                      
               
               ch.acknowledge(delivery_info.delivery_tag, false)              
@@ -116,7 +116,7 @@ module DAAS
         system( "#{cmd_string} &> /dev/null" )
         # system( "#{cmd_string}" )
 
-  			FileUtils.rm Dir.glob( "#{in_file}" )
+        # FileUtils.rm Dir.glob( "#{in_file}" )
   			#system( "rm #{in_file}" )
   			
       end
