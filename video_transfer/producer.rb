@@ -29,7 +29,8 @@ module DAAS
     
 
 		def split_mp4(ifilename, ofilename)
-			default_split_duration_fmt = " -t #{Time.at(default_split_duration.to_i).gmtime.strftime('%R:%S')} "
+			default_split_duration_fmt  = " -t #{Time.at(default_split_duration.to_i).gmtime.strftime('%R:%S')} "
+			default_split_duration_fmt2 = " -t #{Time.at(default_split_duration.to_i+1).gmtime.strftime('%R:%S')} "
 			#trail_options              = " -bsf:v h264_mp4toannexb -f mpegts  "
 			header_info = []
 			
@@ -68,7 +69,12 @@ module DAAS
 					start  = offset
 					offset = offset + default_split_duration.to_i
 					outfile = "#{info_file}i-#{i.to_s}.#{from_media}"
-					option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt  + outfile
+					if offset + 1 > duration
+						option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt2  + outfile
+						offset += 1
+					else
+						option_string = default_option_string + Time.at(start).gmtime.strftime('%R:%S') + default_split_duration_fmt  + outfile
+					end
 					puts option_string
 					system("#{option_string} &> /dev/null")
 					i = i +1
