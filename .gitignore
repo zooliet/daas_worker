@@ -12,3 +12,6 @@ tmp/
 *.jpg
 *.ts
 *.flv
+*.avic
+*.cat
+*.header

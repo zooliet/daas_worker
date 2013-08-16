@@ -113,8 +113,8 @@ module DAAS
   			end
   			
   			puts "*** Command executed: #{cmd_string}"    			        
-        system( "#{cmd_string} &> /dev/null" )
-        # system( "#{cmd_string}" )
+        #system( "#{cmd_string} &> /dev/null" )
+        system( "#{cmd_string}" )
 
         # FileUtils.rm Dir.glob( "#{in_file}" )
   			#system( "rm #{in_file}" )
